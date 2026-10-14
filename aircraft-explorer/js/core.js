@@ -533,6 +533,22 @@ App.boot = () => {
   window.addEventListener("scroll", () => requestAnimationFrame(() => App.active && App.active.scrolly && App.active.scrolly.update()), { passive: true });
   window.addEventListener("resize", () => App.active && App.active.resize && App.active.resize());
   const refresh = () => { App.readTokens(); App.active && App.active.themeChanged && App.active.themeChanged(); };
+  // light/dark switch: dark by default, the visitor's choice is remembered
+  const themeBtn = document.getElementById("themeBtn");
+  const syncThemeBtn = () => {
+    const dark = document.documentElement.dataset.theme !== "light";
+    themeBtn.textContent = dark ? "Light mode" : "Dark mode";
+    themeBtn.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+  };
+  if (themeBtn) {
+    syncThemeBtn();
+    themeBtn.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem("aof-theme", next); } catch (e) {}
+      syncThemeBtn();
+    });
+  }
   const mq = window.matchMedia("(prefers-color-scheme: dark)");
   mq.addEventListener ? mq.addEventListener("change", refresh) : mq.addListener(refresh);
   new MutationObserver(refresh).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
