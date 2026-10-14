@@ -4,7 +4,9 @@ Small, self-contained engineering explainers. No build step: open the HTML file 
 
 ## Anatomy of Flight
 
-`aircraft-explorer/index.html`
+**Live page:** https://raw.githack.com/AvinashAshok02/Engineering-Apps/claude/animated-jet-engine-tool-4qeto0/aircraft-explorer/index.html
+
+Source: `aircraft-explorer/index.html`
 
 A scroll-driven, animated guide to how an airliner works, in seven chapters. Each chapter pairs short explanations with a live panel that changes as you scroll.
 
