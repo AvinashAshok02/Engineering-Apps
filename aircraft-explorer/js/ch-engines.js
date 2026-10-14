@@ -1,296 +1,7 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jet Engine Explorer</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-/* Layout: scroll-told steps on the left, a sticky "test cell" stage on the right
-   that draws the engine cutaway; stacks to stage-on-top at phone width. */
-:root {
-  --bg: #e9edf0;
-  --surface: #f6f8f9;
-  --fg: #16212a;
-  --muted: #56636e;
-  --rule: #c8d0d6;
-  --accent: #1f56c9;
-  --accent-soft: #c9d7f3;
-  /* The stage is an instrument panel and stays dark in both themes. */
-  --stage-bg: #0c1317;
-  --stage-panel: #131d23;
-  --stage-fg: #dbe5ea;
-  --stage-muted: #7f939e;
-  --stage-rule: #24323a;
-  --metal: #4a5862;
-  --metal-hi: #74858f;
-  --hub: #313d45;
-  --lp: #5cc2ae;
-  --hp: #d9a95a;
-  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --tabs-h: 52px;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1519; --surface: #151d22; --fg: #dfe7ec; --muted: #8d9ca6;
-    --rule: #26333b; --accent: #7fa4ff; --accent-soft: #22325a;
-    --stage-bg: #070b0e; --stage-panel: #0e161b; --stage-rule: #1d2a31;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1519; --surface: #151d22; --fg: #dfe7ec; --muted: #8d9ca6;
-  --rule: #26333b; --accent: #7fa4ff; --accent-soft: #22325a;
-  --stage-bg: #070b0e; --stage-panel: #0e161b; --stage-rule: #1d2a31;
-  color-scheme: dark;
-}
-
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-.wrap {
-  max-width: 1280px; margin: 0 auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.05; }
-.label {
-  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--muted);
-}
-button { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-/* Hero */
-.hero { padding-block: 40px 20px; display: grid; gap: 14px; }
-.hero h1 {
-  font-size: clamp(2.6rem, 7vw, 5rem); font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.01em;
-}
-.hero h1 span { color: var(--accent); }
-.hero p { margin: 0; max-width: 62ch; color: var(--muted); font-size: 1.05rem; }
-
-/* Engine tabs */
-.tabs-bar {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
-  background: var(--bg); border-bottom: 1px solid var(--rule);
-}
-.tabs {
-  display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
-  padding-block: 8px; min-height: var(--tabs-h); align-items: center;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab {
-  flex: 0 0 auto; border: 1px solid transparent; background: none; cursor: pointer;
-  padding: 6px 14px; border-radius: 4px;
-  font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
-}
-.tab:hover { color: var(--fg); border-color: var(--rule); }
-.tab[aria-selected="true"] { color: var(--bg); background: var(--fg); }
-.tab small { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400; letter-spacing: 0.04em; margin-left: 6px; opacity: 0.75; }
-
-/* Explorer */
-.explorer {
-  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 48px; padding-block: 24px 40px; align-items: start;
-}
-.steps { min-width: 0; }
-.stage-col {
-  position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--tabs-h) + 18px);
-  min-width: 0;
-}
-.step { min-height: 74vh; display: flex; align-items: center; padding-block: 24px; }
-.step:first-child { min-height: 60vh; align-items: flex-start; }
-.step:last-child { min-height: 80vh; }
-.step-in {
-  display: grid; gap: 12px; max-width: 58ch; opacity: 0.5;
-  transition: opacity 0.35s ease;
-}
-.step.active .step-in { opacity: 1; }
-.step h2 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); text-transform: uppercase; font-weight: 700; }
-.step h3 { font-size: 2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.01em; }
-.step p { margin: 0; }
-.step .tagline { font-size: 1.15rem; color: var(--fg); }
-.stn { display: flex; gap: 10px; align-items: baseline; }
-.stn b { font-family: var(--font-mono); font-weight: 500; font-size: 0.8rem; color: var(--accent); letter-spacing: 0.04em; }
-.facts {
-  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 18px;
-  margin: 6px 0 0; padding-top: 12px; border-top: 1px solid var(--rule);
-}
-.facts dt { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
-.facts dd { margin: 0; }
-.hint { font-size: 0.88rem; color: var(--muted); font-style: italic; }
-.next-btn {
-  justify-self: start; margin-top: 8px; cursor: pointer;
-  border: 1px solid var(--fg); background: none; border-radius: 4px; padding: 8px 16px;
-  font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
-.next-btn:hover { background: var(--fg); color: var(--bg); }
-
-/* Stage */
-.stage {
-  background: var(--stage-bg); color: var(--stage-fg); border-radius: 6px;
-  padding: 12px; display: grid; gap: 10px;
-}
-.stage-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.stage-title { font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.stage-cond { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-muted); }
-#eng { display: block; width: 100%; aspect-ratio: 2 / 1; max-width: 100%; cursor: crosshair; }
-#prof { display: block; width: 100%; height: 64px; }
-.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; font-family: var(--font-mono); font-size: 0.74rem; color: var(--stage-muted); }
-.ctrl-btn {
-  background: var(--stage-panel); border: 1px solid var(--stage-rule); color: var(--stage-fg);
-  border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font-mono); font-size: 0.74rem;
-}
-.ctrl-btn:hover { border-color: var(--stage-muted); }
-.seg { display: inline-flex; border: 1px solid var(--stage-rule); border-radius: 4px; overflow: hidden; }
-.seg button { background: none; border: 0; color: var(--stage-muted); padding: 4px 10px; cursor: pointer; font-family: var(--font-mono); font-size: 0.74rem; }
-.seg button[aria-pressed="true"] { background: var(--stage-panel); color: var(--stage-fg); }
-.speed { display: inline-flex; align-items: center; gap: 8px; }
-.speed input { width: 90px; accent-color: var(--lp); }
-.legend { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.legend .bar { width: 120px; height: 8px; border-radius: 2px; }
-.readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--stage-rule); border-radius: 4px; overflow: hidden; }
-.ro { background: var(--stage-panel); padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
-.ro .k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); }
-.ro .v { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.ro .v small { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 400; color: var(--stage-muted); margin-left: 4px; }
-.ro-where { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.ro-where .keyline { display: inline-flex; gap: 12px; }
-.ro-where .keyline i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
-
-/* Comparison */
-.compare { border-top: 1px solid var(--rule); padding-block: 48px 24px; display: grid; gap: 28px; }
-.compare h2 { font-size: clamp(2rem, 4.4vw, 3rem); text-transform: uppercase; }
-.compare > p { margin: 0; max-width: 64ch; color: var(--muted); }
-.scroll-x { overflow-x: auto; }
-#machChart { display: block; width: 100%; min-width: 560px; height: auto; }
-#machChart text { font-family: var(--font-mono); fill: var(--muted); font-size: 12px; }
-#machChart .rowname { font-family: var(--font-display); font-size: 17px; font-weight: 600; fill: var(--fg); text-transform: uppercase; letter-spacing: 0.03em; }
-#machChart .row { cursor: pointer; }
-#machChart .row:hover .rowname, #machChart .row:focus .rowname { fill: var(--accent); }
-#machChart .row:focus { outline: none; }
-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 0.92rem; }
-th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); }
-th { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-td:first-child { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
-.foot { padding-block: 8px 48px; color: var(--muted); font-size: 0.85rem; max-width: 72ch; }
-
-@media (max-width: 880px) {
-  .explorer { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
-  .stage-col {
-    order: -1; z-index: 10; top: calc(env(safe-area-inset-top, 0px) + var(--tabs-h));
-    background: var(--bg); padding-block: 8px;
-  }
-  .stage { padding: 8px; gap: 6px; }
-  #prof { height: 44px; }
-  .legend .bar { width: 70px; }
-  .ro { padding: 5px 8px; }
-  .ro .v { font-size: 1.2rem; }
-  .step { min-height: 62vh; }
-  .step:first-child { min-height: auto; padding-top: 28px; }
-  .stage-head, .ro-where .keyline { display: none; }
-}
-@media (max-width: 480px) {
-  .speed { display: none; }
-  .tab { font-size: 1rem; padding: 6px 10px; }
-  .tab small { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .step-in { transition: none; }
-}
-</style>
-</head>
-<body>
-
-<header class="wrap hero">
-  <span class="label">Air-breathing propulsion, station by station</span>
-  <h1>Jet Engine <span>Explorer</span></h1>
-  <p>Pick an engine, then scroll. The cutaway follows along, lighting up each section as the air is squeezed, burned and thrown out the back. Particles are coloured by gas temperature; switch to velocity to see where the air speeds up and slows down.</p>
-</header>
-
-<nav class="tabs-bar" aria-label="Engine type">
-  <div class="wrap tabs" id="tabs" role="tablist"></div>
-</nav>
-
-<main class="wrap">
-  <section class="explorer" id="explorer">
-    <div class="steps" id="steps"></div>
-    <div class="stage-col">
-      <div class="stage">
-        <div class="stage-head">
-          <span class="stage-title" id="stageTitle">Turbojet</span>
-          <span class="stage-cond" id="stageCond"></span>
-        </div>
-        <canvas id="eng" aria-label="Animated cutaway of the selected engine" role="img"></canvas>
-        <div class="controls">
-          <button class="ctrl-btn" id="playBtn" type="button" aria-pressed="true">Pause</button>
-          <span class="seg" role="group" aria-label="Colour particles by">
-            <button type="button" id="modeT" aria-pressed="true">Temp</button>
-            <button type="button" id="modeV" aria-pressed="false">Velocity</button>
-          </span>
-          <label class="speed" for="speedIn">Flow <input type="range" id="speedIn" min="0.2" max="2" step="0.1" value="1"></label>
-          <span class="legend"><span id="legLo">220 K</span><span class="bar" id="legBar"></span><span id="legHi">2,500 K</span></span>
-        </div>
-        <canvas id="prof" aria-hidden="true"></canvas>
-        <div class="ro-where">
-          <span id="roWhere">Leaving the nozzle</span>
-          <span class="keyline"><span><i id="keyT"></i>Temperature</span><span><i id="keyP"></i>Pressure</span></span>
-        </div>
-        <div class="readouts">
-          <div class="ro"><span class="k">Temperature</span><span class="v" id="roT">–</span></div>
-          <div class="ro"><span class="k">Pressure</span><span class="v" id="roP">–</span></div>
-          <div class="ro"><span class="k">Gas speed</span><span class="v" id="roV">–</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="compare" id="compare">
-    <span class="label">Side by side</span>
-    <h2>Where each engine works</h2>
-    <p>No single engine covers the whole speed range. Turbines need the air slowed to subsonic speed at the compressor face; ramjets need the vehicle already moving fast; scramjets need it moving very fast. Solid bars are the normal operating range, faint bars are the stretch. Select a row to load that engine.</p>
-    <div class="scroll-x"><svg id="machChart" role="img" aria-label="Flight Mach number range for each engine type, on a square-root scale from Mach 0 to 15"></svg></div>
-    <div class="scroll-x">
-      <table>
-        <thead><tr><th>Engine</th><th>How it compresses air</th><th>Rotating parts</th><th>Where the push comes from</th><th>Flies on</th></tr></thead>
-        <tbody id="cmpBody"></tbody>
-      </table>
-    </div>
-  </section>
-  <p class="foot">Temperatures, pressure ratios and speeds are representative round numbers for each class of engine, not data for one specific model. Turbine engines are shown at sea-level take-off, the ramjet at Mach 3 cruise and the scramjet at Mach 7. Pressure is given as a multiple of the air pressure ahead of the engine. Station numbers follow the usual gas-turbine convention (2 compressor face, 3 compressor exit, 4 turbine entry, 5 turbine exit, 9 nozzle exit).</p>
-</main>
-
-<script>
+/* Chapter: Engines. Animated cutaways of six air-breathing engines. */
 (() => {
 "use strict";
-
-/* ---------- helpers ---------- */
-const at = (p, x) => {
-  if (typeof p === "number") return p;
-  const n = p.length;
-  if (x <= p[0][0]) return p[0][1];
-  for (let i = 1; i < n; i++) {
-    if (x <= p[i][0]) {
-      const [x0, y0] = p[i - 1], [x1, y1] = p[i];
-      return x1 === x0 ? y1 : y0 + (y1 - y0) * (x - x0) / (x1 - x0);
-    }
-  }
-  return p[n - 1][1];
-};
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const fmt = n => Math.round(n).toLocaleString("en-US");
-
+const { at, clamp, fmt } = App;
 /* ---------- engine definitions ----------
    x runs 0 (front) to 1 (back). y is radius for mirrored (round) engines,
    signed height for the scramjet. Profiles are [[x, value], ...]. */
@@ -627,29 +338,19 @@ const vColor = V => ramp(V_STOPS, Math.log(Math.max(30, V)));
 const gradCss = (stops, labels) => "linear-gradient(90deg," + stops.map((s, i) => `${rgb(s[1])} ${(i/(stops.length-1)*100).toFixed(0)}%`).join(",") + ")";
 
 /* ---------- state ---------- */
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduceMotion = App.reduceMotion;
 const S = { eng: ENGINES[0], step: 0, playing: !reduceMotion, mode: "T", speed: 1, t: 0, particles: [] };
-
-const $ = id => document.getElementById(id);
-const cv = $("eng"), ctx = cv.getContext("2d");
-const pv = $("prof"), pctx = pv.getContext("2d");
+let ui, stage, scrolly, cvO, pvO, cv, ctx, pv, pctx;
 let W = 0, H = 0, PW = 0, PH = 0, dpr = 1;
-const css = {};
+const css = App.tokens;
+const q = sel => stage.root.querySelector(sel);
 function readTokens() {
-  const cs = getComputedStyle(document.documentElement);
-  ["stage-bg","stage-panel","stage-fg","stage-muted","stage-rule","metal","metal-hi","hub","lp","hp","accent"].forEach(k => css[k] = cs.getPropertyValue("--" + k).trim());
-  $("keyT").style.background = rgb(tColor(1500));
-  $("keyP").style.background = css["stage-fg"];
+  stage.keyline.innerHTML = `<span><i style="background:${rgb(tColor(1500))}"></i>Temperature</span><span><i style="background:${css["stage-fg"]}"></i>Pressure</span>`;
 }
-
 function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const r = cv.getBoundingClientRect(), pr = pv.getBoundingClientRect();
-  W = r.width; H = r.height; PW = pr.width; PH = pr.height;
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  pv.width = Math.round(PW * dpr); pv.height = Math.round(PH * dpr);
+  cvO.fit(); pvO.fit();
+  dpr = cvO.dpr; W = cvO.w; H = cvO.h; PW = pvO.w; PH = pvO.h;
 }
-
 /* engine-space → canvas */
 const MX = 14;
 let yTop = .3, yBot = -.3, ky = 1;
@@ -980,111 +681,75 @@ function updateReadouts() {
   const ch = st.ch ? e.channels.find(c => c.name === st.ch) : e.channels.find(c => c.main);
   const x = st.probe ?? (st.x ? st.x[1] - .004 : .999);
   const T = at(ch.T, x), P = at(ch.P, x), V = at(ch.V, x);
-  $("roT").innerHTML = `${fmt(T)}<small>K · ${fmt(T - 273)} °C</small>`;
-  $("roP").innerHTML = `×${P < 10 ? P.toFixed(1) : fmt(P)}<small>ambient</small>`;
-  $("roV").innerHTML = `${fmt(Math.round(V / 10) * 10)}<small>m/s</small>`;
-  $("roWhere").textContent = st.at || (st.ch === "bypass" ? "Leaving the bypass duct" : st.ch === "prop" ? "Behind the propeller" : `Leaving the ${st.title.toLowerCase()}`);
+  stage.setReadouts([
+    ["Temperature", `${fmt(T)}<small>K · ${fmt(T - 273)} °C</small>`],
+    ["Pressure", `×${P < 10 ? P.toFixed(1) : fmt(P)}<small>ambient</small>`],
+    ["Gas speed", `${fmt(Math.round(V / 10) * 10)}<small>m/s</small>`]
+  ]);
+  stage.where.textContent = st.at || (st.ch === "bypass" ? "Leaving the bypass duct" : st.ch === "prop" ? "Behind the propeller" : `Leaving the ${st.title.toLowerCase()}`);
 }
 
 /* ---------- steps ---------- */
-const stepsEl = $("steps");
-function renderSteps() {
+function renderStep(st, i, n) {
   const e = S.eng, idx = ENGINES.indexOf(e), nxt = ENGINES[(idx + 1) % ENGINES.length];
-  stepsEl.innerHTML = e.steps.map((st, i) => {
-    if (st.overview) {
-      return `<article class="step" data-i="${i}"><div class="step-in">
-        <span class="label">Engine ${idx + 1} of ${ENGINES.length}</span>
-        <h2>${st.title}</h2><p class="tagline">${st.tagline}</p>${st.body}
-        <dl class="facts">${st.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
-        <p class="hint">Scroll to follow the air through the engine. Tap a part of the drawing to jump to it.</p>
-      </div></article>`;
-    }
-    return `<article class="step" data-i="${i}"><div class="step-in">
-      <p class="stn"><b>STN ${st.stn}</b><span class="label">${i} / ${e.steps.length - 1}</span></p>
-      <h3>${st.title}</h3>${st.body}${st.hint ? `<p class="hint">${st.hint}</p>` : ""}
-      ${st.next ? `<button class="next-btn" type="button" data-next="${nxt.id}">Next: ${nxt.name} →</button>` : ""}
-    </div></article>`;
-  }).join("");
-  stepsEl.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => selectEngine(b.dataset.next, true)));
+  if (st.overview) {
+    return `<span class="label">Engine ${idx + 1} of ${ENGINES.length}</span>
+      <h2>${st.title}</h2><p class="tagline">${st.tagline}</p>${st.body}
+      <dl class="facts">${st.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+      <p class="hint">Scroll to follow the air through the engine. Tap a part of the drawing to jump to it. Switch engines with the buttons above the drawing.</p>`;
+  }
+  return `<p class="stn"><b>STN ${st.stn}</b><span class="label">${i} / ${n - 1}</span></p>
+    <h3>${st.title}</h3>${st.body}${st.hint ? `<p class="hint">${st.hint}</p>` : ""}
+    ${st.next ? `<button class="next-btn" type="button" data-next="${nxt.id}">Next: ${nxt.name} →</button>` : ""}`;
 }
-function setStep(i) {
-  if (i === S.step && stepsEl.querySelector(".step.active")) return;
+function onStep(i) {
   S.step = i;
-  stepsEl.querySelectorAll(".step").forEach(el => el.classList.toggle("active", +el.dataset.i === i));
   updateReadouts();
   drawProfile();
 }
-function onScroll() {
-  const els = stepsEl.querySelectorAll(".step");
-  if (!els.length) return;
-  const narrow = window.matchMedia("(max-width: 880px)").matches;
-  const ref = window.innerHeight * (narrow ? .74 : .5);
-  let best = 0, bestD = Infinity;
-  els.forEach(el => {
-    const r = el.getBoundingClientRect();
-    const d = r.top <= ref && r.bottom >= ref ? 0 : Math.min(Math.abs(r.top - ref), Math.abs(r.bottom - ref));
-    if (d < bestD) { bestD = d; best = +el.dataset.i; }
-  });
-  setStep(best);
-}
 
 /* ---------- engine selection ---------- */
-const tabsEl = $("tabs");
-tabsEl.innerHTML = ENGINES.map(e => `<button class="tab" role="tab" type="button" id="tab-${e.id}" data-id="${e.id}" aria-selected="false">${e.name}<small>${e.tabNote}</small></button>`).join("");
-tabsEl.addEventListener("click", ev => { const b = ev.target.closest(".tab"); if (b) selectEngine(b.dataset.id, true); });
-
 function selectEngine(id, scroll) {
   const e = ENGINES.find(x => x.id === id) || ENGINES[0];
-  S.eng = e; S.step = -1;
-  tabsEl.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.id === e.id)));
-  const tb = $("tab-" + e.id); if (tb && tb.scrollIntoView) tb.scrollIntoView({block: "nearest", inline: "nearest"});
-  $("stageTitle").textContent = e.name;
-  $("stageCond").textContent = e.cond;
-  setFrame(); resetParticles(); renderSteps();
-  try { history.replaceState(null, "", "#" + e.id); } catch (_) {}
-  if (scroll) {
-    const top = $("explorer").getBoundingClientRect().top + window.scrollY - 60;
-    if (window.scrollY > top) window.scrollTo({top, behavior: reduceMotion ? "auto" : "smooth"});
-  }
-  setStep(0);
-  onScroll();
+  S.eng = e; S.step = 0;
+  stage.root.querySelectorAll(".chip").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.id === e.id)));
+  stage.cond.textContent = e.cond;
+  setFrame(); resetParticles();
+  scrolly.render(e.steps);
+  ui.steps.querySelectorAll("[data-next]").forEach(b => b.addEventListener("click", () => { selectEngine(b.dataset.next, true); }));
+  App.setHash(e.id);
+  if (scroll) App.jumpTop();
+  scrolly.set(0);
+  scrolly.update();
 }
 
-/* canvas click → jump to the station under the pointer */
 function stepAt(px) {
   const x = invX(px), e = S.eng;
   let best = -1, w = Infinity;
   e.steps.forEach((st, i) => { if (st.x && x >= st.x[0] && x <= st.x[1] && st.x[1] - st.x[0] < w) { w = st.x[1] - st.x[0]; best = i; } });
   return best;
 }
-cv.addEventListener("click", ev => {
-  const i = stepAt(ev.clientX - cv.getBoundingClientRect().left);
-  if (i < 0) return;
-  const el = stepsEl.querySelector(`.step[data-i="${i}"]`);
-  if (el) el.scrollIntoView({block: "center", behavior: reduceMotion ? "auto" : "smooth"});
-});
-cv.addEventListener("mousemove", ev => { cv.style.cursor = stepAt(ev.clientX - cv.getBoundingClientRect().left) >= 0 ? "pointer" : "default"; });
 
-/* controls */
-const playBtn = $("playBtn");
-function setPlaying(v) { S.playing = v; playBtn.textContent = v ? "Pause" : "Play"; playBtn.setAttribute("aria-pressed", String(v)); }
-playBtn.addEventListener("click", () => setPlaying(!S.playing));
+function setPlaying(v) { S.playing = v; const b = q("#engPlay"); b.textContent = v ? "Pause" : "Play"; b.setAttribute("aria-pressed", String(!v)); }
 function setMode(m) {
   S.mode = m;
-  $("modeT").setAttribute("aria-pressed", String(m === "T"));
-  $("modeV").setAttribute("aria-pressed", String(m === "V"));
-  $("legBar").style.background = gradCss(m === "T" ? T_STOPS : V_STOPS);
-  $("legLo").textContent = m === "T" ? "220 K" : "30 m/s";
-  $("legHi").textContent = m === "T" ? "2,500 K" : "3,000 m/s";
+  q("#engModeT").setAttribute("aria-pressed", String(m === "T"));
+  q("#engModeV").setAttribute("aria-pressed", String(m === "V"));
+  q(".legend .bar").style.background = gradCss(m === "T" ? T_STOPS : V_STOPS);
+  q("#engLegLo").textContent = m === "T" ? "220 K" : "30 m/s";
+  q("#engLegHi").textContent = m === "T" ? "2,500 K" : "3,000 m/s";
 }
-$("modeT").addEventListener("click", () => setMode("T"));
-$("modeV").addEventListener("click", () => setMode("V"));
-$("speedIn").addEventListener("input", ev => { S.speed = +ev.target.value; });
 
 /* ---------- comparison chart & table ---------- */
-function buildCompare() {
-  const svg = $("machChart"), NS = "http://www.w3.org/2000/svg";
-  const Wc = 760, left = 150, right = 30, rowH = 40, top = 14, Hc = top + MACH.length * rowH + 44;
+function buildCompare(host) {
+  host.innerHTML = `<span class="label">Side by side</span>
+    <h2>Where each engine works</h2>
+    <p>No single engine covers the whole speed range. Turbines need the air slowed to subsonic speed at the compressor face; ramjets need the vehicle already moving fast; scramjets need it moving very fast. Solid bars are the normal operating range, faint bars are the stretch. Select a row to load that engine.</p>
+    <div class="scroll-x"><svg class="chart" id="machChart" role="img" aria-label="Flight Mach number range for each engine type, on a square-root scale from Mach 0 to 15"></svg></div>
+    <div class="scroll-x"><table><thead><tr><th>Engine</th><th>How it compresses air</th><th>Rotating parts</th><th>Where the push comes from</th><th>Flies on</th></tr></thead><tbody id="cmpBody"></tbody></table></div>
+    <p class="lede">Turbine engines are shown at sea-level take-off, the ramjet at Mach 3 cruise and the scramjet at Mach 7. Pressure is a multiple of the air pressure ahead of the engine. Station numbers follow the gas-turbine convention: 2 compressor face, 3 compressor exit, 4 turbine entry, 5 turbine exit, 9 nozzle exit.</p>`;
+  const svg = host.querySelector("#machChart"), NS = "http://www.w3.org/2000/svg";
+  const Wc = 760, left = 150, right = 30, rowH = 46, top = 14, Hc = top + MACH.length * rowH + 44;
   svg.setAttribute("viewBox", `0 0 ${Wc} ${Hc}`);
   const sx = m => left + Math.sqrt(m / 15) * (Wc - left - right);
   const el = (t, a, parent = svg) => { const n = document.createElementNS(NS, t); for (const k in a) n.setAttribute(k, a[k]); parent.appendChild(n); return n; };
@@ -1103,51 +768,63 @@ function buildCompare() {
     if (r.ea != null) el("rect", {x: sx(r.ea), y, width: sx(r.eb) - sx(r.ea), height: 18, rx: 2, fill: "var(--accent-soft)"}, g);
     el("rect", {x: sx(r.a), y, width: Math.max(3, sx(r.b) - sx(r.a)), height: 18, rx: 2, fill: "var(--accent)"}, g);
     if (r.note) {
-      const nx = r.eb ? sx(r.eb) + 8 : sx(r.b) + 8;
-      const anchorEnd = nx > Wc - 170;
-      const n = el("text", {x: anchorEnd ? (r.ea != null ? sx(r.ea) - 8 : sx(r.a) - 8) : nx, y: y + 13, "text-anchor": anchorEnd ? "end" : "start"}, g); n.textContent = r.note;
+      const n = el("text", {x: sx(Math.min(r.a, r.ea ?? r.a)), y: y + 32, style: "font-size:11px"}, g); n.textContent = r.note;
     }
-    const go = () => { selectEngine(r.id, false); $("explorer").scrollIntoView({behavior: reduceMotion ? "auto" : "smooth"}); };
+    const go = () => { selectEngine(r.id, true); };
     g.addEventListener("click", go);
     g.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } });
   });
-  $("cmpBody").innerHTML = ENGINES.map(e => `<tr><td>${e.name}</td>${COMPARE[e.id].map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
+  host.querySelector("#cmpBody").innerHTML = ENGINES.map(e => `<tr><td>${e.name}</td>${COMPARE[e.id].map(c => `<td>${c}</td>`).join("")}</tr>`).join("");
 }
 
-/* ---------- main loop ---------- */
-let last = performance.now();
-function tick(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
-  if (S.playing) {
-    S.t += dt * S.speed;
-    const e = S.eng, base = .16 * S.speed;
-    for (const p of S.particles) {
-      const ch = e.channels[p.c];
-      p.x += dt * base * (at(ch.V, Math.max(0, p.x)) / e.vref) * (.92 + .16 * p.j);
-      if (p.x > 1.04 || (ch.x1 && p.x > ch.x1)) spawn(p, e, false);
+/* ---------- chapter ---------- */
+App.register({
+  id: "engines", nav: "Engines", subs: ENGINES.map(e => e.id),
+  build() {
+    ui = App.section(this);
+    this.ui = ui;
+    stage = App.stage(ui.stageHost, {
+      title: `<span class="chips">${ENGINES.map(e => `<button class="chip" type="button" data-id="${e.id}" aria-pressed="false">${e.name}</button>`).join("")}</span>`,
+      aspect: "2 / 1", extraCanvas: true,
+      controls: `<button class="ctrl-btn" id="engPlay" type="button">Pause</button>
+        <span class="seg" role="group" aria-label="Colour particles by"><button type="button" id="engModeT" aria-pressed="true">Temp</button><button type="button" id="engModeV" aria-pressed="false">Velocity</button></span>
+        <label class="rng" for="engSpeed">Flow <input type="range" id="engSpeed" min="0.2" max="2" step="0.1" value="1"></label>
+        <span class="legend"><span id="engLegLo">220 K</span><span class="bar"></span><span id="engLegHi">2,500 K</span></span>`
+    });
+    // the chip row replaces the plain title so engines can be switched from the panel
+    stage.title.classList.remove("stage-title");
+    cvO = stage.cv; pvO = stage.sub; cv = cvO.el; ctx = cvO.ctx; pv = pvO.el; pctx = pvO.ctx;
+    cv.setAttribute("role", "img"); cv.setAttribute("aria-label", "Animated cutaway of the selected engine");
+    stage.root.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => selectEngine(b.dataset.id, true)));
+    q("#engPlay").addEventListener("click", () => setPlaying(!S.playing));
+    q("#engModeT").addEventListener("click", () => setMode("T"));
+    q("#engModeV").addEventListener("click", () => setMode("V"));
+    q("#engSpeed").addEventListener("input", ev => { S.speed = +ev.target.value; });
+    cv.addEventListener("click", ev => { const i = stepAt(ev.clientX - cv.getBoundingClientRect().left); if (i >= 0) scrolly.goto(i); });
+    cv.addEventListener("mousemove", ev => { cv.style.cursor = stepAt(ev.clientX - cv.getBoundingClientRect().left) >= 0 ? "pointer" : "default"; });
+    scrolly = this.scrolly = App.scrolly(ui.steps, S.eng.steps, onStep, renderStep);
+    buildCompare(ui.extras);
+    setMode("T"); setPlaying(S.playing);
+  },
+  activate(sub) {
+    resize(); readTokens();
+    if (sub || !this._init) { this._init = true; selectEngine(sub || S.eng.id, false); }
+    else App.setHash(this.id);
+  },
+  resize() { resize(); if (this._init) { resetParticles(); drawProfile(); } },
+  themeChanged() { readTokens(); drawProfile(); },
+  frame(dt) {
+    if (!W) return;
+    if (S.playing) {
+      S.t += dt * S.speed;
+      const e = S.eng, base = .16 * S.speed;
+      for (const p of S.particles) {
+        const ch = e.channels[p.c];
+        p.x += dt * base * (at(ch.V, Math.max(0, p.x)) / e.vref) * (.92 + .16 * p.j);
+        if (p.x > 1.04 || (ch.x1 && p.x > ch.x1)) spawn(p, e, false);
+      }
     }
+    draw();
   }
-  draw();
-  requestAnimationFrame(tick);
-}
-
-readTokens();
-resize();
-buildCompare();
-setMode("T");
-setPlaying(S.playing);
-const startId = (location.hash || "").slice(1);
-selectEngine(ENGINES.some(e => e.id === startId) ? startId : ENGINES[0].id, false);
-window.addEventListener("scroll", () => requestAnimationFrame(onScroll), {passive: true});
-window.addEventListener("hashchange", () => { const id = location.hash.slice(1); if (id !== S.eng.id && ENGINES.some(e => e.id === id)) selectEngine(id, true); });
-window.addEventListener("resize", () => { resize(); drawProfile(); });
-const mq = window.matchMedia("(prefers-color-scheme: dark)");
-const refreshTheme = () => { readTokens(); drawProfile(); };
-mq.addEventListener ? mq.addEventListener("change", refreshTheme) : mq.addListener(refreshTheme);
-new MutationObserver(refreshTheme).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawProfile);
-requestAnimationFrame(tick);
+});
 })();
-</script>
-</body>
-</html>
