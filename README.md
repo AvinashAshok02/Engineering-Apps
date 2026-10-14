@@ -4,7 +4,7 @@ Small, self-contained engineering explainers. No build step: open the HTML file 
 
 ## Anatomy of Flight
 
-**Live page:** https://raw.githack.com/AvinashAshok02/Engineering-Apps/claude/animated-jet-engine-tool-4qeto0/aircraft-explorer/index.html
+**Live page:** https://avinashashok02.github.io/Engineering-Apps/
 
 Source: `aircraft-explorer/index.html`
 
