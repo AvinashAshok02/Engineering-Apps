@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anatomy of an EV</title>
+<script>try { const t = localStorage.getItem("aev-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one chapter at a time. Each chapter is scroll-told steps on the left
+   and a sticky dark "instrument panel" stage on the right; stacks to stage-on-top
+   at phone width. Extras (charts, tables) follow below. */
+:root {
+  --bg: #e9edf0;
+  --surface: #f6f8f9;
+  --fg: #16212a;
+  --muted: #56636e;
+  --rule: #c8d0d6;
+  --accent: #0f7a63;
+  --accent-soft: #c3e6dc;
+  /* The stage is an instrument panel and stays dark in both themes. */
+  --stage-bg: #0c1317;
+  --stage-panel: #131d23;
+  --stage-fg: #dbe5ea;
+  --stage-muted: #7f939e;
+  --stage-rule: #24323a;
+  /* Stage series colours: picked to read on the dark stage. */
+  --metal: #4a5862;
+  --metal-hi: #74858f;
+  --c1: #5cc2ae;
+  --c2: #d9a95a;
+  --c3: #6f9cf0;
+  --c4: #e8705a;
+  --c5: #b48be0;
+  --hi: #ffcf5a;
+  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --tabs-h: 52px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1519; --surface: #151d22; --fg: #dfe7ec; --muted: #8d9ca6;
+    --rule: #26333b; --accent: #5cd1b2; --accent-soft: #1b3d36;
+    --stage-bg: #070b0e; --stage-panel: #0e161b; --stage-rule: #1d2a31;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1519; --surface: #151d22; --fg: #dfe7ec; --muted: #8d9ca6;
+  --rule: #26333b; --accent: #5cd1b2; --accent-soft: #1b3d36;
+  --stage-bg: #070b0e; --stage-panel: #0e161b; --stage-rule: #1d2a31;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 1280px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.05; }
+.label {
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Hero */
+.hero { padding-block: 36px 18px; display: grid; gap: 12px; }
+.hero h1 { font-size: clamp(2.6rem, 7vw, 5rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; }
+.hero h1 span { color: var(--accent); }
+.hero p { margin: 0; max-width: 64ch; color: var(--muted); font-size: 1.05rem; }
+
+/* Chapter tabs */
+.navrow { display: flex; align-items: center; gap: 8px; }
+.navrow .tabs { flex: 1 1 auto; min-width: 0; }
+.theme-btn {
+  flex: 0 0 auto; cursor: pointer; background: none; color: var(--muted);
+  border: 1px solid var(--rule); border-radius: 4px; padding: 5px 10px;
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.theme-btn:hover { color: var(--fg); border-color: var(--muted); }
+.tabs-bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+  background: var(--bg); border-bottom: 1px solid var(--rule);
+}
+.tabs {
+  display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+  padding-block: 8px; min-height: var(--tabs-h); align-items: center;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  flex: 0 0 auto; border: 1px solid transparent; background: none; cursor: pointer;
+  padding: 6px 14px; border-radius: 4px;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+}
+.tab:hover { color: var(--fg); border-color: var(--rule); }
+.tab[aria-selected="true"] { color: var(--bg); background: var(--fg); }
+.tab small { font-family: var(--font-mono); font-size: 0.66rem; font-weight: 400; letter-spacing: 0.04em; margin-right: 6px; opacity: 0.7; }
+
+/* Explorer */
+.explorer {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 48px; padding-block: 24px 40px; align-items: start;
+}
+.steps { min-width: 0; }
+.stage-col { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--tabs-h) + 18px); min-width: 0; }
+.step { min-height: 74vh; display: flex; align-items: center; padding-block: 24px; }
+.step:first-child { min-height: 60vh; align-items: flex-start; }
+.step:last-child { min-height: 80vh; }
+.step-in { display: grid; gap: 12px; max-width: 58ch; opacity: 0.5; transition: opacity 0.35s ease; }
+.step.active .step-in { opacity: 1; }
+.step h2 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); text-transform: uppercase; font-weight: 700; }
+.step h3 { font-size: 2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.01em; }
+.step p { margin: 0; }
+.step .tagline { font-size: 1.15rem; color: var(--fg); }
+.step ul { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.stn { display: flex; gap: 10px; align-items: baseline; }
+.stn b { font-family: var(--font-mono); font-weight: 500; font-size: 0.8rem; color: var(--accent); letter-spacing: 0.04em; }
+.facts {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 18px;
+  margin: 6px 0 0; padding-top: 12px; border-top: 1px solid var(--rule);
+}
+.facts dt { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.facts dd { margin: 0; }
+.formula {
+  font-family: var(--font-mono); font-size: 0.95rem; padding: 10px 12px; border-radius: 4px;
+  background: var(--surface); border: 1px solid var(--rule); overflow-x: auto; white-space: nowrap;
+}
+.hint { font-size: 0.88rem; color: var(--muted); font-style: italic; }
+.next-btn {
+  justify-self: start; margin-top: 8px; cursor: pointer;
+  border: 1px solid var(--fg); background: none; border-radius: 4px; padding: 8px 16px;
+  font-family: var(--font-display); font-size: 1.15rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.next-btn:hover { background: var(--fg); color: var(--bg); }
+
+/* Stage */
+.stage { background: var(--stage-bg); color: var(--stage-fg); border-radius: 6px; padding: 12px; display: grid; gap: 10px; }
+.stage-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.stage-title { font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.stage-cond { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-muted); }
+.stage-cv { display: block; width: 100%; max-width: 100%; }
+.sub-cv { display: block; width: 100%; height: 64px; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip {
+  background: none; border: 1px solid var(--stage-rule); color: var(--stage-muted); border-radius: 4px;
+  padding: 3px 9px; cursor: pointer; font-family: var(--font-display); font-size: 1rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.chip:hover { color: var(--stage-fg); border-color: var(--stage-muted); }
+.chip[aria-pressed="true"] { background: var(--stage-fg); color: var(--stage-bg); border-color: var(--stage-fg); }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; font-family: var(--font-mono); font-size: 0.74rem; color: var(--stage-muted); }
+.ctrl-btn {
+  background: var(--stage-panel); border: 1px solid var(--stage-rule); color: var(--stage-fg);
+  border-radius: 4px; padding: 4px 10px; cursor: pointer; font-family: var(--font-mono); font-size: 0.74rem;
+}
+.ctrl-btn:hover { border-color: var(--stage-muted); }
+.ctrl-btn[aria-pressed="true"] { border-color: var(--hi); color: var(--hi); }
+.seg { display: inline-flex; border: 1px solid var(--stage-rule); border-radius: 4px; overflow: hidden; }
+.seg button { background: none; border: 0; color: var(--stage-muted); padding: 4px 9px; cursor: pointer; font-family: var(--font-mono); font-size: 0.74rem; }
+.seg button[aria-pressed="true"] { background: var(--stage-panel); color: var(--stage-fg); }
+.rng { display: inline-flex; align-items: center; gap: 8px; }
+.rng input { width: 110px; accent-color: var(--c1); }
+.rng output { color: var(--stage-fg); min-width: 4.5ch; font-variant-numeric: tabular-nums; }
+.legend { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.legend .bar { width: 120px; height: 8px; border-radius: 2px; }
+.pad {
+  width: 74px; height: 74px; border-radius: 6px; border: 1px solid var(--stage-rule);
+  background: var(--stage-panel); position: relative; touch-action: none; cursor: grab; flex: 0 0 auto;
+}
+.pad::before, .pad::after { content: ""; position: absolute; background: var(--stage-rule); }
+.pad::before { left: 50%; top: 6px; bottom: 6px; width: 1px; }
+.pad::after { top: 50%; left: 6px; right: 6px; height: 1px; }
+.pad i { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--hi); left: 50%; top: 50%; z-index: 1; }
+.ctl-grid { display: grid; gap: 6px; }
+.ctl-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.readouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--stage-rule); border-radius: 4px; overflow: hidden; }
+.ro { background: var(--stage-panel); padding: 8px 10px; display: grid; gap: 2px; min-width: 0; }
+.ro .k { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stage-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro .v { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ro .v .approx { font-family: var(--font-mono); font-weight: 400; font-size: 0.75em; margin-right: 2px; color: var(--stage-muted); }
+.ro .v small { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 400; color: var(--stage-muted); margin-left: 4px; }
+.ro-where { font-family: var(--font-mono); font-size: 0.72rem; color: var(--stage-muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ro-where .keyline { display: inline-flex; gap: 12px; }
+.ro-where .keyline i { display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 5px; }
+
+/* Extras below each chapter */
+.extras { border-top: 1px solid var(--rule); padding-block: 44px 24px; display: grid; gap: 28px; }
+.extras h2 { font-size: clamp(2rem, 4.4vw, 3rem); text-transform: uppercase; }
+.extras h3 { font-size: 1.5rem; text-transform: uppercase; font-weight: 600; }
+.extras > p, .extras .lede { margin: 0; max-width: 66ch; color: var(--muted); }
+.scroll-x { overflow-x: auto; }
+.chart { display: block; width: 100%; min-width: 560px; height: auto; }
+.chart text { font-family: var(--font-mono); fill: var(--muted); font-size: 12px; }
+.chart .rowname { font-family: var(--font-display); font-size: 17px; font-weight: 600; fill: var(--fg); text-transform: uppercase; letter-spacing: 0.03em; }
+.chart .row { cursor: pointer; }
+.chart .row:hover .rowname, .chart .row:focus .rowname { fill: var(--accent); }
+.chart .row:focus { outline: none; }
+.chart .inbar { fill: var(--bg); font-size: 11px; }
+table { border-collapse: collapse; width: 100%; min-width: 700px; font-size: 0.92rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); }
+th { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 0.85rem; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; vertical-align: baseline; }
+.rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 28px; }
+.rule-item { display: grid; gap: 4px; padding-top: 12px; border-top: 2px solid var(--fg); min-width: 0; }
+.rule-item b { font-family: var(--font-display); font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.02em; }
+.rule-item span { color: var(--muted); font-size: 0.92rem; }
+.foot { padding-block: 8px 48px; color: var(--muted); font-size: 0.85rem; max-width: 76ch; }
+
+@media (max-width: 880px) {
+  .explorer { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 0; }
+  .stage-col { order: -1; z-index: 10; top: calc(env(safe-area-inset-top, 0px) + var(--tabs-h)); background: var(--bg); padding-block: 8px; }
+  .stage { padding: 8px; gap: 6px; }
+  .stage-head .stage-title, .stage-cond, .ro-where .keyline { display: none; }
+  .stage-head:not(:has(.chips)) { display: none; }
+  .sub-cv { height: 44px; }
+  .legend .bar { width: 70px; }
+  .ro { padding: 5px 8px; }
+  .ro .v { font-size: 1.15rem; }
+  .step { min-height: 62vh; }
+  .step:first-child { min-height: auto; padding-top: 28px; }
+  .pad { width: 60px; height: 60px; }
+  .rng input { width: 84px; }
+}
+@media (max-width: 480px) {
+  .tab { font-size: 1rem; padding: 6px 10px; }
+  .hero { padding-block: 24px 12px; }
+  .chip { font-size: 0.9rem; padding: 2px 7px; }
+}
+
+/* Battery explorer additions */
+.sel {
+  background: var(--stage-panel); color: var(--stage-fg); border: 1px solid var(--stage-rule);
+  border-radius: 4px; padding: 4px 8px; font-family: var(--font-mono); font-size: 0.74rem; max-width: 100%;
+}
+.rng.wide input { width: 180px; }
+.note { font-size: 0.88rem; color: var(--muted); border-left: 2px solid var(--accent); padding-left: 10px; margin: 0; }
+.tag-model { display: inline-block; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; border: 1px solid currentColor; }
+.tag-model.data { color: var(--accent); }
+.tag-model.illus { color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.card { background: var(--bg); padding: 12px 14px; display: grid; gap: 2px; }
+.card .k { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.card .v { font-family: var(--font-display); font-size: 2rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.card .s { font-size: 0.85rem; color: var(--muted); }
+.chart .ln { fill: none; stroke-width: 2; }
+.chart .grid { stroke: var(--rule); stroke-width: 1; }
+.chart .lab { fill: var(--fg); }
+@media (max-width: 880px) { .rng.wide input { width: 120px; } }
+@media (prefers-reduced-motion: reduce) { .step-in { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="wrap hero">
+  <span class="label">Batteries and electric drive units, from the cell to the wheels</span>
+  <h1>Anatomy of an <span>EV</span></h1>
+  <p>Seven chapters on how an electric car stores and uses energy: how a lithium-ion cell works, why it wears out, what real ageing data looks like, a machine-learning model that forecasts that wear, the pack and the battery management system around the cells, the motor and inverter, and where the energy goes on the road. Pick a chapter, then scroll.</p>
+</header>
+
+<nav class="tabs-bar" id="navbar" aria-label="Chapters">
+  <div class="wrap navrow">
+    <div class="tabs" id="chnav" role="tablist"></div>
+    <button class="theme-btn" id="themeBtn" type="button"></button>
+  </div>
+</nav>
+
+<main id="chapters"></main>
+
+<footer class="wrap foot">Cell, pack and drive-unit figures are representative round numbers for current passenger EVs, not data for one vehicle. Two kinds of model appear here and are labelled: <b>illustrative</b> models (the ageing simulator, the range calculator) are textbook equations with typical coefficients; the <b>data-driven</b> forecaster in chapters 3 and 4 is trained on the NASA Ames Prognostics Center of Excellence Li-ion ageing data set, and every forecast shown comes from a model that never saw that cell. Source and training code: <code>battery-model/</code>.</footer>
+
+<script src="data/model.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ch-cell.js"></script>
+<script src="js/ch-ageing.js"></script>
+<script src="js/ch-data.js"></script>
+<script src="js/ch-model.js"></script>
+<script src="js/ch-pack.js"></script>
+<script src="js/ch-drive.js"></script>
+<script src="js/ch-road.js"></script>
+<script>App.boot();</script>
+</body>
+</html>

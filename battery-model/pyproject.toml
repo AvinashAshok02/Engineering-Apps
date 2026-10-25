@@ -1,0 +1,15 @@
+[project]
+name = "bde"
+version = "0.1.0"
+description = "Battery degradation forecaster trained on the NASA PCoE Li-ion ageing data"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pandas>=2.0", "scipy>=1.10", "scikit-learn>=1.3", "joblib>=1.2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[tool.setuptools]
+packages = ["bde"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
